@@ -61,6 +61,20 @@ exports.reopenComplaint = async (req, res) => {
 };
 
 exports.closeComplaint = async (req, res) => {
-  const complaint = await complaintService.closeComplaint(req);
-  res.json(complaint);
+  try {
+    const complaintId = req.params.id;
+    const userId = req.user.id; // ensure authMiddleware runs before this
+
+    const updatedComplaint = await complaintService.closeComplaint(
+      complaintId,
+      userId
+    );
+
+    return res.status(200).json(updatedComplaint);
+  } catch (error) {
+    console.error(error.message); // backend logs human-readable message, no ReferenceError
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Server error",
+    });
+  }
 };

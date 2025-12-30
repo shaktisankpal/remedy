@@ -132,16 +132,36 @@ exports.reopenComplaint = async (req) => {
 };
 
 //client close
-exports.closeComplaint = async (req) => {
-  const complaint = await Complaint.findById(req.params.id);
+exports.closeComplaint = async (complaintId, userId) => {
+  // Find complaint by ID
+  const complaint = await Complaint.findById(complaintId);
 
-  if (complaint.status !== "RESOLVED") {
-    throw new Error("Only resolved complaints can be closed");
+  if (!complaint) {
+    const error = new Error("Complaint not found");
+    error.statusCode = 404;
+    throw error;
   }
 
+  // Ensure the user closing the complaint is the creator
+  if (complaint.createdBy.toString() !== userId) {
+    const error = new Error("Unauthorized to close this complaint");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  // Only resolved complaints can be closed
+  if (complaint.status !== "RESOLVED") {
+    const error = new Error(
+      "Complaint cannot be closed as it is not yet resolved"
+    );
+    error.statusCode = 400; // client error
+    throw error;
+  }
+
+  // Close the complaint
   complaint.status = "CLOSED";
   complaint.isClosed = true;
 
-  await complaint.save();
-  return complaint;
+  const updatedComplaint = await complaint.save();
+  return updatedComplaint;
 };
