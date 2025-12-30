@@ -1,40 +1,41 @@
-const auth = require("../middlewares/auth.middleware");
-const role = require("../middlewares/role.middleware");
 const express = require("express");
 const router = express.Router();
+
+const auth = require("../middlewares/auth.middleware");
+const role = require("../middlewares/role.middleware");
 const complaintController = require("../controllers/complaint.controller");
 
-router.post("/", auth, complaintController.createComplaint);
-
-router.get("/my", auth, complaintController.getMyComplaints);
-
-router.get("/:id", auth, complaintController.getComplaintById);
-
-// L1
+// ========================
+// L1 ROUTES (MUST COME FIRST)
+// ========================
 router.get(
   "/l1",
   auth,
   role("SUPPORT_L1"),
   complaintController.getL1Complaints
 );
+
 router.patch(
   "/:id/assign-l1",
   auth,
   role("SUPPORT_L1"),
   complaintController.assignToL1
 );
+
 router.patch(
   "/:id/start-l1",
   auth,
   role("SUPPORT_L1"),
   complaintController.startL1
 );
+
 router.patch(
   "/:id/resolve-l1",
   auth,
   role("SUPPORT_L1"),
   complaintController.resolveByL1
 );
+
 router.patch(
   "/:id/escalate",
   auth,
@@ -42,19 +43,23 @@ router.patch(
   complaintController.escalateToL2
 );
 
-// L2
+// ========================
+// L2 ROUTES
+// ========================
 router.get(
   "/l2",
   auth,
   role("DEVELOPER_L2"),
   complaintController.getL2Complaints
 );
+
 router.patch(
   "/:id/assign-l2",
   auth,
   role("DEVELOPER_L2"),
   complaintController.assignToL2
 );
+
 router.patch(
   "/:id/resolve-l2",
   auth,
@@ -62,18 +67,30 @@ router.patch(
   complaintController.resolveByL2
 );
 
-// Client
+// ========================
+// CLIENT ROUTES
+// ========================
+router.post("/", auth, complaintController.createComplaint);
+
+router.get("/my", auth, complaintController.getMyComplaints);
+
 router.patch(
   "/:id/reopen",
   auth,
   role("CLIENT"),
   complaintController.reopenComplaint
 );
+
 router.patch(
   "/:id/close",
   auth,
   role("CLIENT"),
   complaintController.closeComplaint
 );
+
+// ========================
+// GENERIC (KEEP LAST)
+// ========================
+router.get("/:id", auth, complaintController.getComplaintById);
 
 module.exports = router;

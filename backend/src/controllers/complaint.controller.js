@@ -16,23 +16,57 @@ exports.getComplaintById = async (req, res) => {
 };
 
 exports.getL1Complaints = async (req, res) => {
-  const complaints = await complaintService.getL1Complaints();
-  res.json(complaints);
+  try {
+    const complaints = await complaintService.getL1Complaints(req.user._id);
+    res.json(complaints);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 exports.assignToL1 = async (req, res) => {
-  const complaint = await complaintService.assignToL1(req);
-  res.json(complaint);
+  try {
+    const complaint = await complaintService.assignToL1(
+      req.params.id,
+      req.user._id // 👈 MUST be _id
+    );
+
+    res.json(complaint);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
 };
 
 exports.startL1 = async (req, res) => {
-  const complaint = await complaintService.startL1(req);
-  res.json(complaint);
+  try {
+    const complaint = await complaintService.startL1(
+      req.params.id,
+      req.user._id
+    );
+
+    res.json(complaint);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
 };
 
 exports.resolveByL1 = async (req, res) => {
-  const complaint = await complaintService.resolveByL1(req);
-  res.json(complaint);
+  try {
+    const complaint = await complaintService.resolveByL1(
+      req.params.id,
+      req.user._id
+    );
+
+    res.json(complaint);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
 };
 
 exports.escalateToL2 = async (req, res) => {

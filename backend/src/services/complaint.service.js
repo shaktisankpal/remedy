@@ -37,19 +37,35 @@ exports.getComplaintById = async (id) => {
 };
 
 // get L1 complaints
-exports.getL1Complaints = async () => {
-  return Complaint.find({
-    status: { $in: ["OPEN", "REOPENED", "ESCALATED_TO_L2"] },
+exports.getL1Complaints = async (userId) => {
+  return await Complaint.find({
+    $or: [
+      // Unassigned queue
+      { status: { $in: ["OPEN", "REOPENED"] } },
+
+      // Assigned to current L1 user
+      {
+        status: { $in: ["ASSIGNED_L1", "IN_PROGRESS_L1"] },
+        assignedL1: userId,
+      },
+    ],
   }).sort({ createdAt: -1 });
 };
 
 // assign to L1
-exports.assignToL1 = async (req) => {
-  const complaint = await Complaint.findById(req.params.id);
+exports.assignToL1 = async (complaintId, userId) => {
+  const complaint = await Complaint.findById(complaintId);
 
-  if (!complaint) throw new Error("Complaint not found");
+  if (!complaint)
+    throw Object.assign(new Error("Complaint not found"), { statusCode: 404 });
 
-  complaint.assignedL1 = req.user?.id || "000000000000000000000002";
+  if (!["OPEN", "REOPENED"].includes(complaint.status)) {
+    throw Object.assign(new Error("Complaint cannot be assigned"), {
+      statusCode: 400,
+    });
+  }
+
+  complaint.assignedL1 = userId;
   complaint.status = "ASSIGNED_L1";
 
   await complaint.save();
@@ -57,11 +73,22 @@ exports.assignToL1 = async (req) => {
 };
 
 // start L1 work
-exports.startL1 = async (req) => {
-  const complaint = await Complaint.findById(req.params.id);
+exports.startL1 = async (complaintId, userId) => {
+  const complaint = await Complaint.findById(complaintId);
+
+  if (!complaint)
+    throw Object.assign(new Error("Complaint not found"), { statusCode: 404 });
 
   if (complaint.status !== "ASSIGNED_L1") {
-    throw new Error("Cannot start work unless assigned");
+    throw Object.assign(new Error("Complaint must be assigned first"), {
+      statusCode: 400,
+    });
+  }
+
+  if (!complaint.assignedL1.equals(userId)) {
+    throw Object.assign(new Error("You are not assigned to this complaint"), {
+      statusCode: 403,
+    });
   }
 
   complaint.status = "IN_PROGRESS_L1";
@@ -109,6 +136,31 @@ exports.resolveByL2 = async (req) => {
 
   if (complaint.status !== "IN_PROGRESS_L2") {
     throw new Error("Invalid state");
+  }
+
+  complaint.status = "RESOLVED";
+  await complaint.save();
+
+  return complaint;
+};
+
+exports.resolveByL1 = async (complaintId, userId) => {
+  const complaint = await Complaint.findById(complaintId);
+
+  if (!complaint)
+    throw Object.assign(new Error("Complaint not found"), { statusCode: 404 });
+
+  if (!complaint.assignedL1 || !complaint.assignedL1.equals(userId)) {
+    throw Object.assign(new Error("You are not assigned to this complaint"), {
+      statusCode: 403,
+    });
+  }
+
+  if (complaint.status !== "IN_PROGRESS_L1") {
+    throw Object.assign(
+      new Error(`Cannot resolve complaint in status ${complaint.status}`),
+      { statusCode: 400 }
+    );
   }
 
   complaint.status = "RESOLVED";
