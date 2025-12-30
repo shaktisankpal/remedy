@@ -93,6 +93,7 @@ const SupportDashboard = () => {
                 <div>
                   <h3 className="font-semibold">{c.title}</h3>
                   <p className="text-sm text-gray-600">Status: {c.status}</p>
+                  <p className="text-gray-700 mt-1">{c.description}</p>
                 </div>
 
                 <button
