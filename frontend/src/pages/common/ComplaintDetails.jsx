@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import ComplaintHistory from "../../components/complaints/ComplaintHistory";
 
 const ComplaintDetails = () => {
   const { id } = useParams();
@@ -198,6 +199,7 @@ const ComplaintDetails = () => {
           </>
         )}
       </div>
+      <ComplaintHistory complaint={complaint} />
     </div>
   );
 };

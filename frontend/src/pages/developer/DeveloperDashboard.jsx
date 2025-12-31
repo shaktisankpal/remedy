@@ -80,7 +80,6 @@ const DeveloperDashboard = () => {
                   >
                     View details
                   </Link>
-                  <p className="text-gray-600 text-sm">{c.description}</p>
                   <p className="text-sm mt-1">
                     Status: <b>{c.status}</b>
                   </p>
@@ -121,7 +120,6 @@ const DeveloperDashboard = () => {
                   >
                     View details
                   </Link>
-                  <p className="text-gray-600 text-sm">{c.description}</p>
                   <p className="text-sm mt-1">
                     Status: <b>{c.status}</b>
                   </p>

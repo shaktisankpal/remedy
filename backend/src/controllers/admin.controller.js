@@ -6,7 +6,8 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.assignRole = async (req, res) => {
-  const { userId, role } = req.body;
+  const userId = req.params.id;
+  const { role } = req.body;
 
   const allowedRoles = ["ADMIN", "CLIENT", "SUPPORT_L1", "DEVELOPER_L2"];
 
@@ -23,7 +24,7 @@ exports.assignRole = async (req, res) => {
   res.json({
     message: "Role updated successfully",
     user: {
-      id: user._id,
+      _id: user._id,
       email: user.email,
       role: user.role,
     },
