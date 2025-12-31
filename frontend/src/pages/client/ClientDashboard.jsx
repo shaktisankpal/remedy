@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { Link } from "react-router-dom";
 
 const ClientDashboard = () => {
   const [complaints, setComplaints] = useState([]);
@@ -68,6 +69,12 @@ const ClientDashboard = () => {
             >
               <div>
                 <h2 className="font-semibold">{complaint.title}</h2>
+                <Link
+                  to={`/complaints/${complaint._id}`}
+                  className="text-blue-600 underline text-sm"
+                >
+                  View details
+                </Link>
                 <p className="text-sm text-gray-600">
                   Status: {complaint.status}
                 </p>

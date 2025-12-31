@@ -13,6 +13,7 @@ import RoleRoute from "../components/common/RoleRoute";
 
 import Unauthorized from "../pages/Unauthorized";
 import CreateComplaint from "../pages/client/CreateComplaint";
+import ComplaintDetails from "../pages/common/ComplaintDetails";
 
 const AppRoutes = () => {
   return (
@@ -20,7 +21,7 @@ const AppRoutes = () => {
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-
+      <Route path="/complaints/:id" element={<ComplaintDetails />} />
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         {/* Admin */}

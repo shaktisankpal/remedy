@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
+import { Link } from "react-router-dom";
 
 const DeveloperDashboard = () => {
   const [complaints, setComplaints] = useState([]);
@@ -73,6 +74,12 @@ const DeveloperDashboard = () => {
               >
                 <div>
                   <h3 className="font-semibold">{c.title}</h3>
+                  <Link
+                    to={`/complaints/${c._id}`}
+                    className="text-blue-600 underline text-sm"
+                  >
+                    View details
+                  </Link>
                   <p className="text-gray-600 text-sm">{c.description}</p>
                   <p className="text-sm mt-1">
                     Status: <b>{c.status}</b>
@@ -108,6 +115,12 @@ const DeveloperDashboard = () => {
               >
                 <div>
                   <h3 className="font-semibold">{c.title}</h3>
+                  <Link
+                    to={`/complaints/${c._id}`}
+                    className="text-blue-600 underline text-sm"
+                  >
+                    View details
+                  </Link>
                   <p className="text-gray-600 text-sm">{c.description}</p>
                   <p className="text-sm mt-1">
                     Status: <b>{c.status}</b>
