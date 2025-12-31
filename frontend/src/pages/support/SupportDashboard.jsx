@@ -8,6 +8,11 @@ const SupportDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Pagination State
+  const [incomingPage, setIncomingPage] = useState(1);
+  const [activePage, setActivePage] = useState(1);
+  const itemsPerPage = 3;
+
   const fetchComplaints = async () => {
     try {
       setLoading(true);
@@ -79,6 +84,39 @@ const SupportDashboard = () => {
     }
   };
 
+  // ---- DATA PROCESSING ----
+  const unassigned = complaints.filter(
+    (c) => c.status === "OPEN" || c.status === "REOPENED"
+  );
+
+  const assignedToMe = complaints.filter(
+    (c) => c.status === "ASSIGNED_L1" || c.status === "IN_PROGRESS_L1"
+  );
+
+  // Pagination Logic: Incoming Tickets
+  const totalIncomingPages = Math.ceil(unassigned.length / itemsPerPage);
+  const currentIncoming = unassigned.slice(
+    (incomingPage - 1) * itemsPerPage,
+    incomingPage * itemsPerPage
+  );
+
+  // Pagination Logic: Active Tickets
+  const totalActivePages = Math.ceil(assignedToMe.length / itemsPerPage);
+  const currentActive = assignedToMe.slice(
+    (activePage - 1) * itemsPerPage,
+    activePage * itemsPerPage
+  );
+
+  // Adjust pages if items are moved/removed
+  useEffect(() => {
+    if (incomingPage > totalIncomingPages && totalIncomingPages > 0) {
+      setIncomingPage(totalIncomingPages);
+    }
+    if (activePage > totalActivePages && totalActivePages > 0) {
+      setActivePage(totalActivePages);
+    }
+  }, [unassigned.length, assignedToMe.length]);
+
   if (loading)
     return (
       <>
@@ -93,14 +131,6 @@ const SupportDashboard = () => {
         </div>
       </>
     );
-
-  const unassigned = complaints.filter(
-    (c) => c.status === "OPEN" || c.status === "REOPENED"
-  );
-
-  const assignedToMe = complaints.filter(
-    (c) => c.status === "ASSIGNED_L1" || c.status === "IN_PROGRESS_L1"
-  );
 
   return (
     <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
@@ -124,8 +154,10 @@ const SupportDashboard = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* SECTION 1: INCOMING QUEUE (Unassigned) */}
-          <section>
+          {/* =========================================
+              SECTION 1: INCOMING QUEUE
+             ========================================= */}
+          <section className="flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500">
                 Incoming Tickets{" "}
@@ -142,8 +174,8 @@ const SupportDashboard = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {unassigned.map((c) => (
+              <div className="space-y-4 flex-1">
+                {currentIncoming.map((c) => (
                   <div
                     key={c._id}
                     className="group border border-gray-200 p-6 hover:border-black transition-all duration-300 bg-white shadow-sm hover:shadow-md"
@@ -189,10 +221,41 @@ const SupportDashboard = () => {
                 ))}
               </div>
             )}
+
+            {/* Pagination Controls: Incoming */}
+            {unassigned.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Page {incomingPage} of {totalIncomingPages}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIncomingPage((p) => Math.max(1, p - 1))}
+                    disabled={incomingPage === 1}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-colors"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() =>
+                      setIncomingPage((p) =>
+                        Math.min(totalIncomingPages, p + 1)
+                      )
+                    }
+                    disabled={incomingPage === totalIncomingPages}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
 
-          {/* SECTION 2: MY CASELOAD (Assigned) */}
-          <section>
+          {/* =========================================
+              SECTION 2: MY CASELOAD
+             ========================================= */}
+          <section className="flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-bold uppercase tracking-widest text-black">
                 Active tickets{" "}
@@ -210,8 +273,8 @@ const SupportDashboard = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {assignedToMe.map((c) => (
+              <div className="space-y-4 flex-1">
+                {currentActive.map((c) => (
                   <div
                     key={c._id}
                     className="relative border-l-4 border-black pl-6 py-4 bg-white hover:bg-gray-50 transition-colors"
@@ -265,6 +328,33 @@ const SupportDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Pagination Controls: Active */}
+            {assignedToMe.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Page {activePage} of {totalActivePages}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setActivePage((p) => Math.max(1, p - 1))}
+                    disabled={activePage === 1}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-colors"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() =>
+                      setActivePage((p) => Math.min(totalActivePages, p + 1))
+                    }
+                    disabled={activePage === totalActivePages}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </section>

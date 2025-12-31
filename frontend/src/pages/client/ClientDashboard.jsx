@@ -8,6 +8,11 @@ const ClientDashboard = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   const navigate = useNavigate();
 
   const fetchComplaints = async () => {
@@ -18,7 +23,7 @@ const ClientDashboard = () => {
       const activeComplaints = res.data.filter((c) => c.status !== "CLOSED");
       setComplaints(activeComplaints);
     } catch (err) {
-      setError("Unable to retrieve your active cases.");
+      setError("Unable to retrieve your active tickets.");
     } finally {
       setLoading(false);
     }
@@ -67,6 +72,26 @@ const ClientDashboard = () => {
     }
   };
 
+  // --- Pagination Logic ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentComplaints = complaints.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(complaints.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   if (loading)
     return (
       <>
@@ -94,7 +119,7 @@ const ClientDashboard = () => {
               Active Complaints
             </h1>
             <p className="text-gray-500 mt-2 text-sm tracking-wide">
-              Manage your ongoing cases and track their resolution status.
+              Manage your ongoing tickets and track their resolution status.
             </p>
           </div>
 
@@ -140,84 +165,124 @@ const ClientDashboard = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {complaints.map((complaint) => (
-              <Link
-                to={`/complaints/${complaint._id}`}
-                key={complaint._id}
-                className="group block p-8 border border-gray-200 hover:border-black transition-colors duration-300 bg-white relative"
-              >
-                {/* Card Top: Status & ID */}
-                <div className="flex justify-between items-center mb-6">
-                  <span className="text-xs font-mono text-gray-400 uppercase tracking-widest">
-                    #{complaint._id.slice(-6)}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${getStatusStyle(
-                        complaint.status
-                      )}`}
-                    ></span>
-                    <span className="text-xs font-semibold tracking-wide text-gray-700">
-                      {complaint.status}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentComplaints.map((complaint) => (
+                <Link
+                  to={`/complaints/${complaint._id}`}
+                  key={complaint._id}
+                  className="group block p-8 border border-gray-200 hover:border-black transition-colors duration-300 bg-white relative"
+                >
+                  {/* Card Top: Status & ID */}
+                  <div className="flex justify-between items-center mb-6">
+                    <span className="text-xs font-mono text-gray-400 uppercase tracking-widest">
+                      #{complaint._id.slice(-6)}
                     </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${getStatusStyle(
+                          complaint.status
+                        )}`}
+                      ></span>
+                      <span className="text-xs font-semibold tracking-wide text-gray-700">
+                        {complaint.status}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Card Content: Title */}
-                <h2 className="text-xl font-medium text-black mb-2 line-clamp-1 group-hover:underline decoration-1 underline-offset-4">
-                  {complaint.title}
-                </h2>
-                <p className="text-sm text-gray-500 mb-8">
-                  Created on{" "}
-                  {new Date(complaint.createdAt).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
+                  {/* Card Content: Title */}
+                  <h2 className="text-xl font-medium text-black mb-2 line-clamp-1 group-hover:underline decoration-1 underline-offset-4">
+                    {complaint.title}
+                  </h2>
+                  <p className="text-sm text-gray-500 mb-8">
+                    Created on{" "}
+                    {new Date(complaint.createdAt).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
 
-                {/* Card Bottom: Actions */}
-                <div className="flex items-center justify-between pt-6 border-t border-gray-100 mt-auto">
-                  <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    View Details
-                    <svg
-                      className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </span>
-
-                  <div className="flex gap-3 z-10">
-                    {/* Only show Reopen if resolved, otherwise show Close */}
-                    {complaint.status === "RESOLVED" ? (
-                      <button
-                        onClick={(e) => reopenComplaint(complaint._id, e)}
-                        className="text-xs font-medium text-gray-500 hover:text-black border border-gray-200 hover:border-black px-3 py-1.5 transition-all"
+                  {/* Card Bottom: Actions */}
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-100 mt-auto">
+                    <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      View Details
+                      <svg
+                        className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        Reopen
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => closeComplaint(complaint._id, e)}
-                        className="text-xs font-medium text-gray-400 hover:text-red-600 px-2 py-1 transition-colors"
-                      >
-                        Close Case
-                      </button>
-                    )}
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M17 8l4 4m0 0l-4 4m4-4H3"
+                        />
+                      </svg>
+                    </span>
+
+                    <div className="flex gap-3 z-10">
+                      {/* Only show Reopen if resolved, otherwise show Close */}
+                      {complaint.status === "RESOLVED" ? (
+                        <button
+                          onClick={(e) => reopenComplaint(complaint._id, e)}
+                          className="text-xs font-medium text-gray-500 hover:text-black border border-gray-200 hover:border-black px-3 py-1.5 transition-all"
+                        >
+                          Reopen
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => closeComplaint(complaint._id, e)}
+                          className="text-xs font-medium text-gray-400 hover:text-red-600 px-2 py-1 transition-colors"
+                        >
+                          Close Case
+                        </button>
+                      )}
+                    </div>
                   </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Pagination Controls - Only show if items > limit */}
+            {complaints.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-12 pt-6 border-t border-gray-100">
+                <span className="text-xs text-gray-400">
+                  Showing{" "}
+                  <span className="font-medium text-black">
+                    {indexOfFirstItem + 1}
+                  </span>{" "}
+                  -{" "}
+                  <span className="font-medium text-black">
+                    {Math.min(indexOfLastItem, complaints.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-black">
+                    {complaints.length}
+                  </span>{" "}
+                  tickets
+                </span>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                    className="px-6 py-2 text-xs font-bold uppercase tracking-wider border border-gray-200 text-black hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-all"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="px-6 py-2 text-xs font-bold uppercase tracking-wider bg-black text-white border border-black hover:bg-gray-800 disabled:opacity-30 disabled:hover:bg-black transition-all"
+                  >
+                    Next
+                  </button>
                 </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

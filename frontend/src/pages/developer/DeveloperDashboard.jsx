@@ -8,6 +8,11 @@ const DeveloperDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Pagination State
+  const [escalationPage, setEscalationPage] = useState(1);
+  const [activePage, setActivePage] = useState(1);
+  const itemsPerPage = 3;
+
   const fetchComplaints = async () => {
     try {
       setLoading(true);
@@ -45,10 +50,9 @@ const DeveloperDashboard = () => {
     }
   };
 
-  // ================= FILTERING =================
+  // ================= DATA PROCESSING =================
 
   const unassigned = complaints.filter((c) => c.status === "ESCALATED_TO_L2");
-
   const assignedToMe = complaints.filter((c) => c.status === "IN_PROGRESS_L2");
 
   // Helper for status visuals
@@ -62,6 +66,30 @@ const DeveloperDashboard = () => {
         return "bg-gray-300";
     }
   };
+
+  // --- Pagination Logic: Escalations ---
+  const totalEscalationPages = Math.ceil(unassigned.length / itemsPerPage);
+  const currentEscalations = unassigned.slice(
+    (escalationPage - 1) * itemsPerPage,
+    escalationPage * itemsPerPage
+  );
+
+  // --- Pagination Logic: Active Tickets ---
+  const totalActivePages = Math.ceil(assignedToMe.length / itemsPerPage);
+  const currentActive = assignedToMe.slice(
+    (activePage - 1) * itemsPerPage,
+    activePage * itemsPerPage
+  );
+
+  // Adjust pages if items are moved/removed
+  useEffect(() => {
+    if (escalationPage > totalEscalationPages && totalEscalationPages > 0) {
+      setEscalationPage(totalEscalationPages);
+    }
+    if (activePage > totalActivePages && totalActivePages > 0) {
+      setActivePage(totalActivePages);
+    }
+  }, [unassigned.length, assignedToMe.length]);
 
   if (loading)
     return (
@@ -100,8 +128,10 @@ const DeveloperDashboard = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* SECTION 1: ESCALATION QUEUE (Unassigned) */}
-          <section>
+          {/* =========================================
+              SECTION 1: ESCALATION QUEUE
+             ========================================= */}
+          <section className="flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-bold uppercase tracking-widest text-purple-700">
                 Escalation Queue{" "}
@@ -116,8 +146,8 @@ const DeveloperDashboard = () => {
                 <p className="text-gray-400 text-sm">No pending escalations.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {unassigned.map((c) => (
+              <div className="space-y-4 flex-1">
+                {currentEscalations.map((c) => (
                   <div
                     key={c._id}
                     className="group border border-gray-200 p-6 hover:border-purple-600 transition-all duration-300 bg-white shadow-sm hover:shadow-md"
@@ -164,10 +194,41 @@ const DeveloperDashboard = () => {
                 ))}
               </div>
             )}
+
+            {/* Pagination Controls: Escalations */}
+            {unassigned.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Page {escalationPage} of {totalEscalationPages}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEscalationPage((p) => Math.max(1, p - 1))}
+                    disabled={escalationPage === 1}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-purple-600 hover:text-purple-700 disabled:opacity-30 disabled:hover:border-gray-200 disabled:hover:text-inherit transition-colors"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() =>
+                      setEscalationPage((p) =>
+                        Math.min(totalEscalationPages, p + 1)
+                      )
+                    }
+                    disabled={escalationPage === totalEscalationPages}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-purple-600 hover:text-purple-700 disabled:opacity-30 disabled:hover:border-gray-200 disabled:hover:text-inherit transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
 
-          {/* SECTION 2: ACTIVE SPRINTS (Assigned) */}
-          <section>
+          {/* =========================================
+              SECTION 2: ACTIVE SPRINTS
+             ========================================= */}
+          <section className="flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-bold uppercase tracking-widest text-black">
                 Active Tickets{" "}
@@ -185,8 +246,8 @@ const DeveloperDashboard = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {assignedToMe.map((c) => (
+              <div className="space-y-4 flex-1">
+                {currentActive.map((c) => (
                   <div
                     key={c._id}
                     className="relative border-l-4 border-purple-600 pl-6 py-4 bg-white hover:bg-gray-50 transition-colors"
@@ -232,6 +293,33 @@ const DeveloperDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Pagination Controls: Active Tickets */}
+            {assignedToMe.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Page {activePage} of {totalActivePages}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setActivePage((p) => Math.max(1, p - 1))}
+                    disabled={activePage === 1}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-colors"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() =>
+                      setActivePage((p) => Math.min(totalActivePages, p + 1))
+                    }
+                    disabled={activePage === totalActivePages}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-gray-200 hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </section>
