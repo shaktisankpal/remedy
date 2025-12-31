@@ -113,9 +113,15 @@ exports.escalateToL2 = async (req) => {
 };
 
 //get L2 complaints
-exports.getL2Complaints = async () => {
+exports.getL2Complaints = async (userId) => {
   return Complaint.find({
-    status: { $in: ["ESCALATED_TO_L2", "REOPENED"] },
+    $or: [
+      { status: "ESCALATED_TO_L2" },
+      {
+        status: "IN_PROGRESS_L2",
+        assignedL2: userId,
+      },
+    ],
   }).sort({ createdAt: -1 });
 };
 

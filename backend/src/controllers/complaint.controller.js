@@ -75,7 +75,7 @@ exports.escalateToL2 = async (req, res) => {
 };
 
 exports.getL2Complaints = async (req, res) => {
-  const complaints = await complaintService.getL2Complaints();
+  const complaints = await complaintService.getL2Complaints(req.user._id);
   res.json(complaints);
 };
 
