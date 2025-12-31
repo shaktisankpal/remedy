@@ -14,6 +14,7 @@ import RoleRoute from "../components/common/RoleRoute";
 import Unauthorized from "../pages/Unauthorized";
 import CreateComplaint from "../pages/client/CreateComplaint";
 import ComplaintDetails from "../pages/common/ComplaintDetails";
+import ClientClosedComplaints from "../pages/client/ClientClosedComplaints";
 
 const AppRoutes = () => {
   return (
@@ -32,6 +33,7 @@ const AppRoutes = () => {
         {/* Client */}
         <Route element={<RoleRoute allowedRoles={["CLIENT"]} />}>
           <Route path="/client" element={<ClientDashboard />} />
+          <Route path="/client/closed" element={<ClientClosedComplaints />} />
           <Route path="/client/create" element={<CreateComplaint />} />
         </Route>
 
