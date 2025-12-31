@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import { Link } from "react-router-dom";
+import DeveloperNavbar from "../../components/navbar/DeveloperNavbar";
 
 const DeveloperDashboard = () => {
   const [complaints, setComplaints] = useState([]);
@@ -13,7 +14,7 @@ const DeveloperDashboard = () => {
       const res = await api.get("/api/complaints/l2");
       setComplaints(res.data);
     } catch (err) {
-      setError("Failed to load complaints");
+      setError("Failed to sync engineering tickets.");
     } finally {
       setLoading(false);
     }
@@ -30,11 +31,12 @@ const DeveloperDashboard = () => {
       await api.patch(`/api/complaints/${id}/assign-l2`);
       fetchComplaints();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to assign complaint");
+      alert(err.response?.data?.message || "Failed to claim ticket");
     }
   };
 
   const resolveComplaint = async (id) => {
+    if (!window.confirm("Confirm fix deployment and resolution?")) return;
     try {
       await api.patch(`/api/complaints/${id}/resolve-l2`);
       fetchComplaints();
@@ -49,93 +51,192 @@ const DeveloperDashboard = () => {
 
   const assignedToMe = complaints.filter((c) => c.status === "IN_PROGRESS_L2");
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  // Helper for status visuals
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "ESCALATED_TO_L2":
+        return "bg-purple-600";
+      case "IN_PROGRESS_L2":
+        return "bg-blue-600";
+      default:
+        return "bg-gray-300";
+    }
+  };
+
+  if (loading)
+    return (
+      <>
+        <DeveloperNavbar />
+        <div className="h-[calc(100vh-64px)] flex items-center justify-center bg-white">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-4 w-4 bg-black rounded-full mb-2"></div>
+            <span className="text-sm font-medium tracking-widest text-gray-400">
+              LOADING CONSOLE
+            </span>
+          </div>
+        </div>
+      </>
+    );
 
   return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Developer Dashboard</h1>
+    <div className="min-h-screen bg-white text-black font-sans selection:bg-purple-900 selection:text-white">
+      <DeveloperNavbar />
 
-      {error && <p className="text-red-500">{error}</p>}
+      <main className="max-w-7xl mx-auto px-8 py-12">
+        {/* Header */}
+        <div className="mb-12 border-b border-gray-100 pb-6">
+          <h1 className="text-3xl font-light tracking-tight text-black">
+            Developer Console
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm tracking-wide">
+            L2 Escalations and technical resolution tracking.
+          </p>
+        </div>
 
-      {/* ESCALATED */}
-      <section>
-        <h2 className="text-xl font-semibold mb-3">
-          Escalated Complaints ({unassigned.length})
-        </h2>
-
-        {unassigned.length === 0 ? (
-          <p className="text-gray-500">No escalated complaints</p>
-        ) : (
-          <div className="space-y-3">
-            {unassigned.map((c) => (
-              <div
-                key={c._id}
-                className="border p-4 rounded flex justify-between items-center"
-              >
-                <div>
-                  <h3 className="font-semibold">{c.title}</h3>
-                  <Link
-                    to={`/complaints/${c._id}`}
-                    className="text-blue-600 underline text-sm"
-                  >
-                    View details
-                  </Link>
-                  <p className="text-sm mt-1">
-                    Status: <b>{c.status}</b>
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => assignToMe(c._id)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                >
-                  Assign to me
-                </button>
-              </div>
-            ))}
+        {error && (
+          <div className="mb-8 p-4 border border-red-200 bg-red-50 text-red-800 text-sm">
+            {error}
           </div>
         )}
-      </section>
 
-      {/* ASSIGNED */}
-      <section>
-        <h2 className="text-xl font-semibold mb-3">
-          Assigned to Me ({assignedToMe.length})
-        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* SECTION 1: ESCALATION QUEUE (Unassigned) */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-purple-700">
+                Escalation Queue{" "}
+                <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded ml-2 border border-purple-100">
+                  {unassigned.length}
+                </span>
+              </h2>
+            </div>
 
-        {assignedToMe.length === 0 ? (
-          <p className="text-gray-500">No assigned complaints</p>
-        ) : (
-          <div className="space-y-3">
-            {assignedToMe.map((c) => (
-              <div
-                key={c._id}
-                className="border p-4 rounded flex justify-between items-center"
-              >
-                <div>
-                  <h3 className="font-semibold">{c.title}</h3>
-                  <Link
-                    to={`/complaints/${c._id}`}
-                    className="text-blue-600 underline text-sm"
-                  >
-                    View details
-                  </Link>
-                  <p className="text-sm mt-1">
-                    Status: <b>{c.status}</b>
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => resolveComplaint(c._id)}
-                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                >
-                  Resolve
-                </button>
+            {unassigned.length === 0 ? (
+              <div className="p-8 border border-dashed border-gray-200 text-center rounded-sm">
+                <p className="text-gray-400 text-sm">No pending escalations.</p>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            ) : (
+              <div className="space-y-4">
+                {unassigned.map((c) => (
+                  <div
+                    key={c._id}
+                    className="group border border-gray-200 p-6 hover:border-purple-600 transition-all duration-300 bg-white shadow-sm hover:shadow-md"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${getStatusColor(
+                            c.status
+                          )}`}
+                        ></span>
+                        <span className="text-xs font-bold tracking-wide text-gray-600 uppercase">
+                          Escalated
+                        </span>
+                      </div>
+                      <span className="text-xs font-mono text-gray-400">
+                        #{c._id.slice(-6)}
+                      </span>
+                    </div>
+
+                    <h3 className="font-medium text-lg mb-2 text-black group-hover:underline decoration-1 underline-offset-4 decoration-purple-600">
+                      {c.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-6 font-light">
+                      {c.description ||
+                        "No description provided by L1 Support."}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                      <Link
+                        to={`/complaints/${c._id}`}
+                        className="text-xs font-bold uppercase tracking-wide text-gray-400 hover:text-black transition-colors"
+                      >
+                        Review Specs
+                      </Link>
+                      <button
+                        onClick={() => assignToMe(c._id)}
+                        className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-purple-700 transition-colors"
+                      >
+                        Claim Ticket
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* SECTION 2: ACTIVE SPRINTS (Assigned) */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-black">
+                Active Tickets{" "}
+                <span className="bg-black text-white px-1.5 py-0.5 rounded ml-2">
+                  {assignedToMe.length}
+                </span>
+              </h2>
+            </div>
+
+            {assignedToMe.length === 0 ? (
+              <div className="p-8 border border-gray-100 bg-gray-50 text-center rounded-sm">
+                <p className="text-gray-400 text-sm">No active tickets.</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Claim an escalation to start working.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {assignedToMe.map((c) => (
+                  <div
+                    key={c._id}
+                    className="relative border-l-4 border-purple-600 pl-6 py-4 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-black">
+                        {c.title}{" "}
+                        <span className="text-gray-400 font-normal text-xs ml-2">
+                          #{c._id.slice(-6)}
+                        </span>
+                      </h3>
+                      <div className="px-2 py-0.5 bg-blue-50 rounded text-[10px] font-bold uppercase tracking-wide text-blue-600">
+                        In Progress
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/complaints/${c._id}`}
+                      className="text-sm text-gray-500 hover:text-black underline decoration-gray-300 underline-offset-2 mb-4 inline-block"
+                    >
+                      Open technical details
+                    </Link>
+
+                    <div className="flex gap-3 mt-2">
+                      <button
+                        onClick={() => resolveComplaint(c._id)}
+                        className="w-full bg-black text-white py-2 text-xs font-bold uppercase tracking-wider hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>Deploy Fix & Resolve</span>
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
     </div>
   );
 };
