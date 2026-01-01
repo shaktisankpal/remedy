@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import ComplaintHistory from "../../components/complaints/ComplaintHistory";
+
+// Import all Navbar variants
 import ClientNavbar from "../../components/navbar/ClientNavbar";
+import SupportNavbar from "../../components/navbar/SupportNavbar";
+import DeveloperNavbar from "../../components/navbar/DeveloperNavbar";
 
 const ComplaintDetails = () => {
   const { id } = useParams();
@@ -103,11 +107,25 @@ const ComplaintDetails = () => {
     return false;
   };
 
+  // Dynamic Navbar Renderer
+  const renderNavbar = () => {
+    switch (role) {
+      case "SUPPORT_L1":
+        return <SupportNavbar />;
+      case "DEVELOPER_L2":
+        return <DeveloperNavbar />;
+      case "CLIENT":
+      default:
+        // Default to client, or you could add an AdminNavbar case if needed
+        return <ClientNavbar />;
+    }
+  };
+
   // ================= RENDER =================
   if (loading)
     return (
       <>
-        <ClientNavbar />
+        {renderNavbar()}
         <div className="h-[calc(100vh-64px)] flex items-center justify-center bg-white">
           <div className="animate-pulse flex flex-col items-center">
             <div className="h-4 w-4 bg-black rounded-full mb-2"></div>
@@ -122,7 +140,7 @@ const ComplaintDetails = () => {
   if (error)
     return (
       <>
-        <ClientNavbar />
+        {renderNavbar()}
         <div className="p-12 flex justify-center">
           <div className="text-red-600 border border-red-200 bg-red-50 px-6 py-4 rounded-sm">
             {error}
@@ -147,7 +165,7 @@ const ComplaintDetails = () => {
 
   return (
     <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-      <ClientNavbar />
+      {renderNavbar()}
 
       <main className="max-w-7xl mx-auto px-8 py-12">
         {/* Navigation Breadcrumb */}

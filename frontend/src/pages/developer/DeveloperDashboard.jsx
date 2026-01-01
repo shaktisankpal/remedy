@@ -181,7 +181,7 @@ const DeveloperDashboard = () => {
                         to={`/complaints/${c._id}`}
                         className="text-xs font-bold uppercase tracking-wide text-gray-400 hover:text-black transition-colors"
                       >
-                        Review Specs
+                        View Detials
                       </Link>
                       <button
                         onClick={() => assignToMe(c._id)}
