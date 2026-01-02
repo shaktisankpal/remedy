@@ -73,6 +73,22 @@ const ComplaintDetails = () => {
     fetchComplaint();
   };
 
+  // Added Logic to Close Complaint Permanently
+  const closeComplaint = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to close this case permanently? This action cannot be undone."
+      )
+    )
+      return;
+    try {
+      await api.patch(`/api/complaints/${id}/close`);
+      fetchComplaint();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to close complaint");
+    }
+  };
+
   // ================= STYLES & HELPERS =================
   const getStatusColor = (status) => {
     switch (status) {
@@ -116,7 +132,6 @@ const ComplaintDetails = () => {
         return <DeveloperNavbar />;
       case "CLIENT":
       default:
-        // Default to client, or you could add an AdminNavbar case if needed
         return <ClientNavbar />;
     }
   };
@@ -160,7 +175,6 @@ const ComplaintDetails = () => {
     assignedL2,
     createdAt,
   } = complaint;
-
   const canAct = hasActionsAvailable(role, status);
 
   return (
@@ -193,7 +207,6 @@ const ComplaintDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* LEFT COLUMN: Main Content */}
           <div className="lg:col-span-2 space-y-12">
-            {/* Header Block */}
             <div className="border-b border-gray-100 pb-8">
               <div className="flex items-center gap-3 mb-4">
                 <span className="font-mono text-sm text-gray-400 uppercase tracking-widest">
@@ -215,7 +228,6 @@ const ComplaintDetails = () => {
               </h1>
             </div>
 
-            {/* Description Block */}
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
                 Description
@@ -225,7 +237,6 @@ const ComplaintDetails = () => {
               </div>
             </div>
 
-            {/* History Component Integration */}
             <div className="pt-8 border-t border-gray-100">
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-8">
                 Activity Timeline
@@ -238,12 +249,10 @@ const ComplaintDetails = () => {
 
           {/* RIGHT COLUMN: Sidebar (Metadata & Actions) */}
           <div className="space-y-8">
-            {/* Action Panel */}
             <div className="bg-white border border-gray-200 p-6 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-black"></div>
               <h3 className="text-sm font-bold text-black mb-4">Actions</h3>
 
-              {/* Render Buttons if Actions Available */}
               {canAct ? (
                 <div className="flex flex-col gap-3">
                   {/* -------- SUPPORT L1 ACTIONS -------- */}
@@ -257,7 +266,6 @@ const ComplaintDetails = () => {
                           Assign to Me
                         </button>
                       )}
-
                       {status === "ASSIGNED_L1" && (
                         <button
                           onClick={startL1}
@@ -266,7 +274,6 @@ const ComplaintDetails = () => {
                           Start Investigation
                         </button>
                       )}
-
                       {status === "IN_PROGRESS_L1" && (
                         <div className="space-y-3">
                           <button
@@ -297,7 +304,6 @@ const ComplaintDetails = () => {
                           Assign to Me
                         </button>
                       )}
-
                       {status === "IN_PROGRESS_L2" && (
                         <button
                           onClick={resolveL2}
@@ -313,25 +319,31 @@ const ComplaintDetails = () => {
                   {role === "CLIENT" && (
                     <>
                       {status === "RESOLVED" && (
-                        <button
-                          onClick={reopenComplaint}
-                          className="w-full border border-gray-300 text-black px-4 py-3 text-sm font-medium hover:border-black transition-colors"
-                        >
-                          Reopen Ticket
-                        </button>
+                        <div className="space-y-3">
+                          <button
+                            onClick={reopenComplaint}
+                            className="w-full border border-black text-black px-4 py-3 text-sm font-medium hover:bg-black hover:text-white transition-all"
+                          >
+                            Reopen Ticket
+                          </button>
+                          <button
+                            onClick={closeComplaint}
+                            className="w-full border border-red-200 text-red-600 px-4 py-3 text-sm font-medium hover:bg-red-50 transition-colors"
+                          >
+                            Close Permanently
+                          </button>
+                        </div>
                       )}
                     </>
                   )}
                 </div>
               ) : (
-                /* No Actions Available State */
                 <div className="flex flex-col items-center justify-center text-center py-6 bg-gray-50 border border-gray-100 rounded-sm">
                   <svg
                     className="w-6 h-6 text-gray-300 mb-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
                       strokeLinecap="round"
